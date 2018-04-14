@@ -23,6 +23,8 @@ import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.JobStatistics;
 import com.google.cloud.bigquery.JobStatus;
 import com.google.cloud.bigquery.Table;
+import com.google.cloud.bigquery.TableDataWriteChannel;
+import com.google.cloud.bigquery.WriteChannelConfiguration;
 import org.apache.nifi.util.TestRunner;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,6 +63,9 @@ public class PutBigQueryBatchTest extends AbstractBQTest {
     @Mock
     JobStatistics stats;
 
+    @Mock
+    TableDataWriteChannel tableDataWriteChannel;
+
     @Before
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -81,7 +86,6 @@ public class PutBigQueryBatchTest extends AbstractBQTest {
         runner.setProperty(PutBigQueryBatch.DATASET, DATASET);
         runner.setProperty(PutBigQueryBatch.TABLE_NAME, TABLENAME);
         runner.setProperty(PutBigQueryBatch.TABLE_SCHEMA, TABLE_SCHEMA);
-        runner.setProperty(PutBigQueryBatch.SOURCE_FILE, SOURCE_FILE);
         runner.setProperty(PutBigQueryBatch.SOURCE_TYPE, SOURCE_TYPE);
         runner.setProperty(PutBigQueryBatch.CREATE_DISPOSITION, CREATE_DISPOSITION);
         runner.setProperty(PutBigQueryBatch.WRITE_DISPOSITION, WRITE_DISPOSITION);
@@ -99,6 +103,8 @@ public class PutBigQueryBatchTest extends AbstractBQTest {
 
         when(table.exists()).thenReturn(Boolean.TRUE);
         when(bq.create(ArgumentMatchers.isA(JobInfo.class))).thenReturn(job);
+        when(bq.writer(ArgumentMatchers.isA(WriteChannelConfiguration.class))).thenReturn(tableDataWriteChannel);
+        when(tableDataWriteChannel.getJob()).thenReturn(job);
         when(job.waitFor()).thenReturn(job);
         when(job.getStatus()).thenReturn(jobStatus);
         when(job.getStatistics()).thenReturn(stats);

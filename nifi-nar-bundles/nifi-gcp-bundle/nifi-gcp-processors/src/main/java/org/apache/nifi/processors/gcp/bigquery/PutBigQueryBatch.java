@@ -21,15 +21,22 @@ import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.FormatOptions;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.LoadJobConfiguration;
 import com.google.cloud.bigquery.Schema;
+import com.google.cloud.bigquery.TableDataWriteChannel;
 import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.WriteChannelConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.reflect.TypeToken;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.nifi.annotation.behavior.InputRequirement;
 import org.apache.nifi.annotation.behavior.WritesAttribute;
 import org.apache.nifi.annotation.behavior.WritesAttributes;
@@ -43,9 +50,6 @@ import org.apache.nifi.processor.ProcessContext;
 import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
-import static org.apache.nifi.processors.gcp.AbstractGCPProcessor.PROJECT_ID;
-import static org.apache.nifi.processors.gcp.bigquery.AbstractBigQueryProcessor.REL_FAILURE;
-import static org.apache.nifi.processors.gcp.bigquery.AbstractBigQueryProcessor.REL_SUCCESS;
 import org.apache.nifi.processors.gcp.storage.DeleteGCSObject;
 import org.apache.nifi.processors.gcp.storage.PutGCSObject;
 
@@ -62,7 +66,6 @@ import org.apache.nifi.processors.gcp.storage.PutGCSObject;
     @WritesAttribute(attribute = BigQueryAttributes.DATASET_ATTR, description = BigQueryAttributes.DATASET_DESC),
     @WritesAttribute(attribute = BigQueryAttributes.TABLE_NAME_ATTR, description = BigQueryAttributes.TABLE_NAME_DESC),
     @WritesAttribute(attribute = BigQueryAttributes.TABLE_SCHEMA_ATTR, description = BigQueryAttributes.TABLE_SCHEMA_DESC),
-    @WritesAttribute(attribute = BigQueryAttributes.SOURCE_FILE_ATTR, description = BigQueryAttributes.SOURCE_FILE_DESC),
     @WritesAttribute(attribute = BigQueryAttributes.SOURCE_TYPE_ATTR, description = BigQueryAttributes.SOURCE_TYPE_DESC),
     @WritesAttribute(attribute = BigQueryAttributes.IGNORE_UNKNOWN_ATTR, description = BigQueryAttributes.IGNORE_UNKNOWN_DESC),
     @WritesAttribute(attribute = BigQueryAttributes.CREATE_DISPOSITION_ATTR, description = BigQueryAttributes.CREATE_DISPOSITION_DESC),
@@ -107,23 +110,13 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
         .build();
 
-    public static final PropertyDescriptor SOURCE_FILE = new PropertyDescriptor
-        .Builder().name(BigQueryAttributes.SOURCE_FILE_ATTR)
-        .displayName("Load file path")
-        .description(BigQueryAttributes.SOURCE_FILE_DESC)
-        .required(true)
-        .defaultValue("gs://${gcs.path}")
-        .expressionLanguageSupported(true)
-        .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
-        .build();
-
     public static final PropertyDescriptor SOURCE_TYPE = new PropertyDescriptor
         .Builder().name(BigQueryAttributes.SOURCE_TYPE_ATTR)
         .displayName("Load file type")
-        .description(BigQueryAttributes.SOURCE_FILE_DESC)
+        .description(BigQueryAttributes.SOURCE_TYPE_DESC)
         .required(true)
-        .allowableValues(FormatOptions.json().getType(), FormatOptions.csv().getType())
-        .defaultValue(FormatOptions.json().getType())
+        .allowableValues(FormatOptions.json().getType(), FormatOptions.avro().getType(), FormatOptions.csv().getType())
+        .defaultValue(FormatOptions.avro().getType())
         .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
         .build();
 
@@ -181,7 +174,6 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
                 .add(DATASET)
                 .add(TABLE_NAME)
                 .add(TABLE_SCHEMA)
-                .add(SOURCE_FILE)
                 .add(SOURCE_TYPE)
                 .add(CREATE_DISPOSITION)
                 .add(WRITE_DISPOSITION)
@@ -229,17 +221,32 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         final TableId tableId = TableId.of(projectId, dataset_str, tablename_str);
 
         final String fileType = context.getProperty(SOURCE_TYPE).getValue();
-        final String jsonFile = context.getProperty(SOURCE_FILE).evaluateAttributeExpressions(flow).getValue();
 
-        LoadJobConfiguration configuration = LoadJobConfiguration.newBuilder(tableId, jsonFile, FormatOptions.of(fileType))
-            .setCreateDisposition(JobInfo.CreateDisposition.valueOf(context.getProperty(CREATE_DISPOSITION).getValue()))
-            .setWriteDisposition(JobInfo.WriteDisposition.valueOf(context.getProperty(WRITE_DISPOSITION).getValue()))
-            .setIgnoreUnknownValues(context.getProperty(IGNORE_UNKNOWN).asBoolean())
-            .setMaxBadRecords(context.getProperty(MAXBAD_RECORDS).asInteger())
-            .setSchema(schemaCache)
-            .build();
+        WriteChannelConfiguration writeChannelConfiguration =
+                WriteChannelConfiguration.newBuilder(tableId)
+                        .setCreateDisposition(JobInfo.CreateDisposition.valueOf(context.getProperty(CREATE_DISPOSITION).getValue()))
+                        .setWriteDisposition(JobInfo.WriteDisposition.valueOf(context.getProperty(WRITE_DISPOSITION).getValue()))
+                        .setIgnoreUnknownValues(context.getProperty(IGNORE_UNKNOWN).asBoolean())
+                        .setMaxBadRecords(context.getProperty(MAXBAD_RECORDS).asInteger())
+                        .setSchema(schemaCache)
+                        .setFormatOptions(FormatOptions.of(fileType))
+                        .build();
+        TableDataWriteChannel writer = bq.writer(writeChannelConfiguration);
 
-        Job job = bq.create(JobInfo.of(configuration));
+        try {
+            try (InputStream read = session.read(flow)) {
+                byte[] bytes = IOUtils.toByteArray(read);
+                ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+                writer.write(byteBuffer);
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e) {
+            throw new ProcessException(e);
+        }
+
+        Job job = writer.getJob();
+
         try {
             job = job.waitFor();
         } catch (Throwable ex) {

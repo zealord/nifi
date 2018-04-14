@@ -16,7 +16,7 @@
  */
 package org.apache.nifi.processors.gcp.storage;
 
-import com.google.cloud.Page;
+import com.google.api.gax.paging.Page;
 import com.google.cloud.storage.Acl;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobInfo;
@@ -271,6 +271,7 @@ public class ListGCSBucketTest extends AbstractGCSTest {
         reset(storage, mockBlobPages);
         final ListGCSBucket processor = getProcessor();
         final TestRunner runner = buildNewRunner(processor);
+        runner.setValidateExpressionUsage(false);
         addRequiredPropertiesToRunner(runner);
         runner.assertValid();
 

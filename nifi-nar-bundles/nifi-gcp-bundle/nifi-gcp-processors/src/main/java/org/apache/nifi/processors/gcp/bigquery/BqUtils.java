@@ -20,6 +20,8 @@ package org.apache.nifi.processors.gcp.bigquery;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.services.bigquery.model.TableSchema;
 import com.google.cloud.bigquery.Field;
+import com.google.cloud.bigquery.FieldList;
+import com.google.cloud.bigquery.LegacySQLTypeName;
 import com.google.cloud.bigquery.Schema;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -40,24 +42,25 @@ public class BqUtils {
         String typeStr = fMap.get("type").toString();
         String nameStr = fMap.get("name").toString();
         String modeStr = fMap.get("mode").toString();
-        Field.Type type = null;
+        LegacySQLTypeName type = null;
 
         if(typeStr.equals("BOOLEAN")) {
-            type = Field.Type.bool();
+            type = LegacySQLTypeName.BOOLEAN;
         } else if(typeStr.equals("STRING")) {
-            type = Field.Type.string();
+            type =LegacySQLTypeName.STRING;
         } else if(typeStr.equals("BYTES")) {
-            type = Field.Type.bytes();
+            type = LegacySQLTypeName.BYTES;
         } else if(typeStr.equals("INTEGER")) {
-            type = Field.Type.integer();
+            type = LegacySQLTypeName.INTEGER;
         } else if(typeStr.equals("FLOAT")) {
-            type = Field.Type.floatingPoint();
+            type = LegacySQLTypeName.FLOAT;
         } else if(typeStr.equals("TIMESTAMP") || typeStr.equals("DATE")
                   || typeStr.equals("TIME") || typeStr.equals("DATETIME")) {
-            type = Field.Type.timestamp();
+            type = LegacySQLTypeName.TIMESTAMP;
         } else if(typeStr.equals("RECORD")) {
-            List<Map> m_fields = (List<Map>) fMap.get("fields");
-            type = Field.Type.record(listToFields(m_fields));
+            List<Field> m_fields = (List<Field>) fMap.get("fields");
+            FieldList fieldList = FieldList.of(m_fields);
+            Field.newBuilder("RECORD", LegacySQLTypeName.RECORD, fieldList);
         }
 
         return Field.newBuilder(nameStr, type).setMode(Field.Mode.valueOf(modeStr)).build();

@@ -55,9 +55,6 @@ public class BigQueryAttributes {
     public static final String TABLE_CACHE_RESET_DESC = "How often to reset table info cache";
 
     // Batch Attributes
-    public static final String SOURCE_FILE_ATTR = "bq.load.file";
-    public static final String SOURCE_FILE_DESC = "URL of file to load (gs://[bucket]/[key]";
-
     public static final String SOURCE_TYPE_ATTR = "bq.load.type";
     public static final String SOURCE_TYPE_DESC = "Data type of the file to be loaded";
 

@@ -17,11 +17,10 @@
 
 package org.apache.nifi.processors.gcp.bigquery;
 
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.RetryParams;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.spi.BigQueryRpc;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,14 +31,12 @@ import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.processor.ProcessContext;
 import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processors.gcp.AbstractGCPProcessor;
-import static org.apache.nifi.processors.gcp.AbstractGCPProcessor.PROJECT_ID;
-import static org.apache.nifi.processors.gcp.AbstractGCPProcessor.RETRY_COUNT;
 
 /**
  *
  *  Base class for creating processors that connect to GCP BiqQuery service
  */
-public abstract class AbstractBigQueryProcessor extends AbstractGCPProcessor<BigQuery, BigQueryRpc, BigQueryOptions>{
+public abstract class AbstractBigQueryProcessor extends AbstractGCPProcessor<BigQuery, BigQueryOptions>{
     public static final Relationship REL_SUCCESS =
             new Relationship.Builder().name("success")
                     .description("FlowFiles are routed to this relationship after a successful Google BigQuery operation.")
@@ -72,9 +69,8 @@ public abstract class AbstractBigQueryProcessor extends AbstractGCPProcessor<Big
         return BigQueryOptions.newBuilder()
                 .setCredentials(credentials)
                 .setProjectId(projectId)
-                .setRetryParams(RetryParams.newBuilder()
-                        .setRetryMaxAttempts(retryCount)
-                        .setRetryMinAttempts(retryCount)
+                .setRetrySettings(RetrySettings.newBuilder()
+                        .setMaxAttempts(retryCount)
                         .build())
                 .build();
     }

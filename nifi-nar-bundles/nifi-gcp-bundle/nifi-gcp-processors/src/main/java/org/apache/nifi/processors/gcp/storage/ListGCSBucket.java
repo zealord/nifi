@@ -16,7 +16,7 @@
  */
 package org.apache.nifi.processors.gcp.storage;
 
-import com.google.cloud.Page;
+import com.google.api.gax.paging.Page;
 import com.google.cloud.storage.Acl;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobInfo;
@@ -147,7 +147,7 @@ public class ListGCSBucket extends AbstractGCSProcessor {
             .displayName("Bucket")
             .description(BUCKET_DESC)
             .required(true)
-            .expressionLanguageSupported(false)
+            .expressionLanguageSupported(true)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
@@ -162,7 +162,7 @@ public class ListGCSBucket extends AbstractGCSProcessor {
     public static final PropertyDescriptor USE_GENERATIONS = new PropertyDescriptor.Builder()
             .name("gcs-use-generations")
             .displayName("Use Generations")
-            .expressionLanguageSupported(false)
+            .expressionLanguageSupported(true)
             .required(true)
             .addValidator(StandardValidators.BOOLEAN_VALIDATOR)
             .allowableValues("true", "false")
@@ -239,11 +239,11 @@ public class ListGCSBucket extends AbstractGCSProcessor {
 
         final long startNanos = System.nanoTime();
 
-        final String bucket = context.getProperty(BUCKET).getValue();
+        final String bucket = context.getProperty(BUCKET).evaluateAttributeExpressions().getValue();
 
         final String prefix = context.getProperty(PREFIX).getValue();
 
-        final boolean useGenerations = context.getProperty(USE_GENERATIONS).asBoolean();
+        final boolean useGenerations = context.getProperty(USE_GENERATIONS).evaluateAttributeExpressions().asBoolean();
 
         List<Storage.BlobListOption> listOptions = new ArrayList<>();
         if (prefix != null) {
