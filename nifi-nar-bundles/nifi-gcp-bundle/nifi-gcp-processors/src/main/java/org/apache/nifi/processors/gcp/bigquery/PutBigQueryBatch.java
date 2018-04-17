@@ -26,11 +26,9 @@ import com.google.cloud.bigquery.TableDataWriteChannel;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.WriteChannelConfiguration;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
@@ -82,7 +80,7 @@ import org.apache.nifi.processors.gcp.storage.PutGCSObject;
 
 public class PutBigQueryBatch extends AbstractBigQueryProcessor {
 
-    public static final PropertyDescriptor DATASET = new PropertyDescriptor
+    static final PropertyDescriptor DATASET = new PropertyDescriptor
         .Builder().name(BigQueryAttributes.DATASET_ATTR)
         .displayName("Dataset")
         .description(BigQueryAttributes.DATASET_DESC)
@@ -92,7 +90,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
         .build();
 
-    public static final PropertyDescriptor TABLE_NAME = new PropertyDescriptor
+    static final PropertyDescriptor TABLE_NAME = new PropertyDescriptor
         .Builder().name(BigQueryAttributes.TABLE_NAME_ATTR)
         .displayName("Table Name")
         .description(BigQueryAttributes.TABLE_NAME_DESC)
@@ -102,7 +100,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
         .build();
 
-    public static final PropertyDescriptor TABLE_SCHEMA = new PropertyDescriptor
+    static final PropertyDescriptor TABLE_SCHEMA = new PropertyDescriptor
         .Builder().name(BigQueryAttributes.TABLE_SCHEMA_ATTR)
         .displayName("Table Schema")
         .description(BigQueryAttributes.TABLE_SCHEMA_DESC)
@@ -110,7 +108,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
         .build();
 
-    public static final PropertyDescriptor SOURCE_TYPE = new PropertyDescriptor
+    static final PropertyDescriptor SOURCE_TYPE = new PropertyDescriptor
         .Builder().name(BigQueryAttributes.SOURCE_TYPE_ATTR)
         .displayName("Load file type")
         .description(BigQueryAttributes.SOURCE_TYPE_DESC)
@@ -120,7 +118,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
         .build();
 
-    public static final PropertyDescriptor IGNORE_UNKNOWN = new PropertyDescriptor.Builder()
+    static final PropertyDescriptor IGNORE_UNKNOWN = new PropertyDescriptor.Builder()
         .name(BigQueryAttributes.IGNORE_UNKNOWN_ATTR)
         .displayName("Ignore Unknown Values")
         .description(BigQueryAttributes.IGNORE_UNKNOWN_DESC)
@@ -130,7 +128,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .defaultValue("true")
         .build();
 
-    public static final PropertyDescriptor CREATE_DISPOSITION = new PropertyDescriptor.Builder()
+    static final PropertyDescriptor CREATE_DISPOSITION = new PropertyDescriptor.Builder()
         .name(BigQueryAttributes.CREATE_DISPOSITION_ATTR)
         .displayName("Create Disposition")
         .description(BigQueryAttributes.CREATE_DISPOSITION_DESC)
@@ -140,7 +138,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
         .build();
 
-    public static final PropertyDescriptor WRITE_DISPOSITION = new PropertyDescriptor.Builder()
+    static final PropertyDescriptor WRITE_DISPOSITION = new PropertyDescriptor.Builder()
         .name(BigQueryAttributes.WRITE_DISPOSITION_ATTR)
         .displayName("Write Disposition")
         .description(BigQueryAttributes.WRITE_DISPOSITION_DESC)
@@ -150,7 +148,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
         .build();
 
-    public static final PropertyDescriptor MAXBAD_RECORDS = new PropertyDescriptor.Builder()
+    static final PropertyDescriptor MAXBAD_RECORDS = new PropertyDescriptor.Builder()
         .name(BigQueryAttributes.MAX_BADRECORDS_ATTR)
         .displayName("Max Bad Records")
         .description(BigQueryAttributes.MAX_BADRECORDS_DESC)
@@ -159,11 +157,9 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .addValidator(StandardValidators.NON_NEGATIVE_INTEGER_VALIDATOR)
         .build();
 
-    private final static Type gsonParseType = new TypeToken<Map<String, Object>>(){}.getType();
-
     private Schema schemaCache = null;
 
-    public PutBigQueryBatch() {
+    PutBigQueryBatch() {
 
     }
 
@@ -199,8 +195,6 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         if(schemaCache == null) {
             String schemaStr = context.getProperty(TABLE_SCHEMA).getValue();
             schemaCache = BqUtils.schemaFromString(schemaStr);
-
-            getLogger().info("Enabled StreamIntoBigQuery");
         }
     }
 
