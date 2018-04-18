@@ -236,8 +236,11 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
             } finally {
                 writer.close();
             }
-        } catch (IOException e) {
-            throw new ProcessException(e);
+        } catch (Throwable ex) {
+            getLogger().log(LogLevel.ERROR, ex.getMessage(), ex);
+            flow = session.penalize(flow);
+            session.transfer(flow, REL_FAILURE);
+            return;
         }
 
         Job job = writer.getJob();
@@ -246,11 +249,8 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
             job = job.waitFor();
         } catch (Throwable ex) {
             getLogger().log(LogLevel.ERROR, ex.getMessage(), ex);
-
             flow = session.penalize(flow);
-
             session.transfer(flow, REL_FAILURE);
-
             return;
         }
 
