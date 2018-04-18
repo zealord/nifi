@@ -69,7 +69,7 @@ public abstract class AbstractGCSProcessor extends AbstractGCPProcessor<Storage,
 
     @Override
     protected StorageOptions getServiceOptions(ProcessContext context, GoogleCredentials credentials) {
-        final String projectId = context.getProperty(PROJECT_ID).getValue();
+        final String projectId = context.getProperty(PROJECT_ID).evaluateAttributeExpressions().getValue();
         final Integer retryCount = context.getProperty(RETRY_COUNT).asInteger();
 
         final String proxyHost = context.getProperty(PROXY_HOST).getValue();

@@ -279,7 +279,7 @@ public class PutBigQueryStream extends AbstractBigQueryProcessor {
                 session.transfer(ff, REL_ROW_TOO_BIG);
             }
 
-            final String projectId = context.getProperty(PROJECT_ID).getValue();
+            final String projectId = context.getProperty(PROJECT_ID).evaluateAttributeExpressions().getValue();
             final String dataset_str = context.getProperty(DATASET).evaluateAttributeExpressions(ff).getValue();
             final String tablename_str = context.getProperty(TABLE_NAME).evaluateAttributeExpressions(ff).getValue();
 

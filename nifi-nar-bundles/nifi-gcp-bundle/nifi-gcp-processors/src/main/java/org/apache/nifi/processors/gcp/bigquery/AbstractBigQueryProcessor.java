@@ -63,7 +63,7 @@ public abstract class AbstractBigQueryProcessor extends AbstractGCPProcessor<Big
 
     @Override
     protected BigQueryOptions getServiceOptions(ProcessContext context, GoogleCredentials credentials) {
-        final String projectId = context.getProperty(PROJECT_ID).getValue();
+        final String projectId = context.getProperty(PROJECT_ID).evaluateAttributeExpressions().getValue();
         final Integer retryCount = Integer.valueOf(context.getProperty(RETRY_COUNT).getValue());
 
         return BigQueryOptions.newBuilder()

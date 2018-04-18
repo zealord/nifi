@@ -25,18 +25,21 @@ import com.google.cloud.bigquery.LegacySQLTypeName;
 import com.google.cloud.bigquery.Schema;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.beam.sdk.util.Transport;
 
 /**
  *
  */
 public class BqUtils {
-    private final static Type gsonSchemaType = new TypeToken<List<Map>>(){}.getType();
+    private final static Type gsonSchemaType = new TypeToken<List<Map>>() {
+    }.getType();
 
     public static Field mapToField(Map fMap) {
         String typeStr = fMap.get("type").toString();
@@ -44,20 +47,20 @@ public class BqUtils {
         String modeStr = fMap.get("mode").toString();
         LegacySQLTypeName type = null;
 
-        if(typeStr.equals("BOOLEAN")) {
+        if (typeStr.equals("BOOLEAN")) {
             type = LegacySQLTypeName.BOOLEAN;
-        } else if(typeStr.equals("STRING")) {
-            type =LegacySQLTypeName.STRING;
-        } else if(typeStr.equals("BYTES")) {
+        } else if (typeStr.equals("STRING")) {
+            type = LegacySQLTypeName.STRING;
+        } else if (typeStr.equals("BYTES")) {
             type = LegacySQLTypeName.BYTES;
-        } else if(typeStr.equals("INTEGER")) {
+        } else if (typeStr.equals("INTEGER")) {
             type = LegacySQLTypeName.INTEGER;
-        } else if(typeStr.equals("FLOAT")) {
+        } else if (typeStr.equals("FLOAT")) {
             type = LegacySQLTypeName.FLOAT;
-        } else if(typeStr.equals("TIMESTAMP") || typeStr.equals("DATE")
-                  || typeStr.equals("TIME") || typeStr.equals("DATETIME")) {
+        } else if (typeStr.equals("TIMESTAMP") || typeStr.equals("DATE")
+                || typeStr.equals("TIME") || typeStr.equals("DATETIME")) {
             type = LegacySQLTypeName.TIMESTAMP;
-        } else if(typeStr.equals("RECORD")) {
+        } else if (typeStr.equals("RECORD")) {
             List<Field> m_fields = (List<Field>) fMap.get("fields");
             FieldList fieldList = FieldList.of(m_fields);
             Field.newBuilder("RECORD", LegacySQLTypeName.RECORD, fieldList);
@@ -68,7 +71,7 @@ public class BqUtils {
 
     public static List<Field> listToFields(List<Map> m_fields) {
         List<Field> fields = new ArrayList(m_fields.size());
-        for(Map m : m_fields) {
+        for (Map m : m_fields) {
             fields.add(mapToField(m));
         }
 
@@ -76,10 +79,13 @@ public class BqUtils {
     }
 
     public static Schema schemaFromString(String schemaStr) {
-        Gson gson = new Gson();
-        List<Map> fields = gson.fromJson(schemaStr, gsonSchemaType);
-
-        return Schema.of(BqUtils.listToFields(fields));
+        if (schemaStr == null) {
+            return null;
+        } else {
+            Gson gson = new Gson();
+            List<Map> fields = gson.fromJson(schemaStr, gsonSchemaType);
+            return Schema.of(BqUtils.listToFields(fields));
+        }
     }
 
     public static <T> T fromJsonString(String json, Class<T> clazz) throws IOException {
