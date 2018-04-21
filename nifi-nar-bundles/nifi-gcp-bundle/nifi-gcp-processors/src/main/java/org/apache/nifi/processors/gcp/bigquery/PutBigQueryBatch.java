@@ -87,7 +87,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .required(true)
         .defaultValue("${" + BigQueryAttributes.DATASET_ATTR + "}")
         .expressionLanguageSupported(true)
-        .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+        .addValidator(StandardValidators.NON_EMPTY_EL_VALIDATOR)
         .build();
 
     public static final PropertyDescriptor TABLE_NAME = new PropertyDescriptor
@@ -97,7 +97,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
         .required(true)
         .defaultValue("${" + BigQueryAttributes.TABLE_NAME_ATTR + "}")
         .expressionLanguageSupported(true)
-        .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+        .addValidator(StandardValidators.NON_EMPTY_EL_VALIDATOR)
         .build();
 
     public static final PropertyDescriptor TABLE_SCHEMA = new PropertyDescriptor
