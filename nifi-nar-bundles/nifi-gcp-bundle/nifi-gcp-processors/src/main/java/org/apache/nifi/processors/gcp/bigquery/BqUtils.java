@@ -20,7 +20,6 @@ package org.apache.nifi.processors.gcp.bigquery;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.services.bigquery.model.TableSchema;
 import com.google.cloud.bigquery.Field;
-import com.google.cloud.bigquery.FieldList;
 import com.google.cloud.bigquery.LegacySQLTypeName;
 import com.google.cloud.bigquery.Schema;
 import com.google.gson.Gson;
@@ -61,9 +60,7 @@ public class BqUtils {
                 || typeStr.equals("TIME") || typeStr.equals("DATETIME")) {
             type = LegacySQLTypeName.TIMESTAMP;
         } else if (typeStr.equals("RECORD")) {
-            List<Field> m_fields = (List<Field>) fMap.get("fields");
-            FieldList fieldList = FieldList.of(m_fields);
-            Field.newBuilder("RECORD", LegacySQLTypeName.RECORD, fieldList);
+            type = LegacySQLTypeName.RECORD;
         }
 
         return Field.newBuilder(nameStr, type).setMode(Field.Mode.valueOf(modeStr)).build();
