@@ -27,7 +27,6 @@ import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.WriteChannelConfiguration;
 import com.google.common.collect.ImmutableList;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -236,7 +235,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
             } finally {
                 writer.close();
             }
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             getLogger().log(LogLevel.ERROR, ex.getMessage(), ex);
             flow = session.penalize(flow);
             session.transfer(flow, REL_FAILURE);
@@ -247,7 +246,7 @@ public class PutBigQueryBatch extends AbstractBigQueryProcessor {
 
         try {
             job = job.waitFor();
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
             getLogger().log(LogLevel.ERROR, ex.getMessage(), ex);
             flow = session.penalize(flow);
             session.transfer(flow, REL_FAILURE);
